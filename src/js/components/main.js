@@ -5,6 +5,8 @@ var React = require("React");
 
 var TodoComponent = require("./todo.js");
 
+var SetCompletedTodosCommand = require("../commands/todos_set_completed.js");
+
 
 var MainComponent = React.createClass({
     render: function () {
@@ -15,13 +17,17 @@ var MainComponent = React.createClass({
         
         return (
 			<section id="main">
-				<input id="toggle-all" type="checkbox" />
+				<input id="toggle-all" type="checkbox" onChange={this.onToggleChange} />
 				<label htmlFor="toggle-all">Mark all as complete</label>
                 <ul id="todo-list">
                     {todoList}
 				</ul>
 			</section>
         );
+    },
+    
+    onToggleChange: function (event) {
+        new SetCompletedTodosCommand(event.target.checked).execute();
     }
 });
 

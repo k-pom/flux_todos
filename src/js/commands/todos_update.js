@@ -8,7 +8,7 @@ var DatabaseCommand = require('./database.js');
 var collection = require("../collections/todos.js"); 
 
 /**
- * Command update a todo.
+ * Command to update a todo.
  *
  * @constructor
  * @param {Object} todo - backbone.js model to update

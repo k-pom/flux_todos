@@ -8,21 +8,23 @@ var DatabaseCommand = require('./database.js');
 var collection = require("../collections/todos.js"); 
 
 /**
- * Command to clear any completed todo from the indexedDB and the collection.
+ * Command to set the completed state of all the todos.
  * 
  * @constructor
+ * @param {Boolean} toggle - the expected state of all the todos.
  */
 
-function ClearCompletedTodosCommand() {
+function SetCompletedTodosCommand(toggle) {
+    this.toggle = toggle;
     this.prereq = {
         "db": new DatabaseCommand()
     };
 };
 
-ClearCompletedTodosCommand.prototype = _.extend({}, BaseCommand.prototype, {
+SetCompletedTodosCommand.prototype = _.extend({}, BaseCommand.prototype, {
     
     /**
-     * Clear out the completed todos.
+     * Set the completed state of all the todos.
      *
      * @public
      * @param {Function} callback - called with the results of the command.
@@ -32,29 +34,31 @@ ClearCompletedTodosCommand.prototype = _.extend({}, BaseCommand.prototype, {
     run: function(err, data, callback) {
         var trans = data.db.transaction(["todos"], "readwrite");
         var oStore = trans.objectStore("todos");
-        var index = oStore.index("completed");
         
         oStore.openCursor().onsuccess = function (event) {
             var cursor = event.target.result;
             if (cursor) {
-                if (!cursor.value.completed) {
+                if (cursor.value.completed === this.toggle) {
                     cursor.continue();
                     return;
                 }
                 
-                var todoId = cursor.value.id;
-                var deleteRequest = oStore.delete(todoId);
-                deleteRequest.onsuccess = function () {
-                    var model = collection.get(todoId);
-                    collection.remove(model);
+                var todo = collection.get(cursor.value.id);
+                todo.set({"completed": this.toggle});
+                var attrs = _.clone(todo.attributes);
+
+                var request = oStore.put(attrs);
+                request.onsuccess = function (event) {
+                    collection.add(todo, {merge: true, silent: true});
                     cursor.continue();
                 };
             } else {
+                collection.trigger("setcompleted");
                 callback(err, true);
             }
         }.bind(this);
     }
 });
 
-ClearCompletedTodosCommand.prototype.constructor = ClearCompletedTodosCommand;
-module.exports = ClearCompletedTodosCommand;
+SetCompletedTodosCommand.prototype.constructor = SetCompletedTodosCommand;
+module.exports = SetCompletedTodosCommand;
