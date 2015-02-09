@@ -5,7 +5,7 @@ var _ = require('underscore');
 var BaseCommand = require('./base.js');
 
 //
-// Database Cache and 
+// Database Cache and
 //
 
 var database = null;
@@ -14,8 +14,8 @@ var VERSION = 5;
 
 var onUpgradeNeeded = function (event) {
     var db = event.target.result;
-    
-    db.deleteObjectStore("todos");
+
+    //db.deleteObjectStore("todos");
     var objectStore = db.createObjectStore("todos", {keyPath: "id",  autoIncrement: true});
     objectStore.createIndex("completed", "completed", {unique: false});
 };
@@ -25,7 +25,7 @@ var onUpgradeNeeded = function (event) {
  *
  * This command will cache a refrence to the database, which subsequent calls
  * to execute will return.
- * 
+ *
  * @constructor
  */
 
@@ -35,7 +35,7 @@ function DatabaseCommand() {
 };
 
 DatabaseCommand.prototype = _.extend({}, BaseCommand.prototype, {
-    
+
     /**
      * Get a reference to the indexedDB.
      *
@@ -49,15 +49,15 @@ DatabaseCommand.prototype = _.extend({}, BaseCommand.prototype, {
             callback(null, database);
             return;
         };
-        
+
         var request = window.indexedDB.open(DB_NAME, VERSION);
         request.onupgradeneeded = onUpgradeNeeded;
-        
+
         request.onsuccess = function (event) {
             database = request.result;
             callback(null, database);
         };
-        
+
         request.onerror = function (event) {
             callback(event, null);
         };
